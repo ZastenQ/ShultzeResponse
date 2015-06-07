@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ShultzeResponse
 {
-    class DBGeneration
+    public static class ShultzeMethods
     {
         private static Random random = new Random(DateTime.Now.Millisecond);
 
@@ -38,7 +38,7 @@ namespace ShultzeResponse
                 //CreateTheme(connection, "Berries", "Strawberry", "Raspberry", "Blackberry", "Blueberry", "Cranberry");
 
                 //  FillResponses(connection);
-                IEnumerable<Int32[,]> responses = ResponseProcess(connection);
+                IEnumerable<Int32[,]> responses = ProcessResponses(connection);
 
                 foreach (Int32[,] matrix in responses)
                 {
@@ -133,33 +133,20 @@ namespace ShultzeResponse
             return output;
         }
 
-        public static IEnumerable<Int32[,]> ResponseProcess(SqlConnection sqlconn)
+        private static void PrintMatrix(Int32[,] getMatrix)
         {
-            String allOptionsQuery = @"
-            SELECT R.OPTION_ID, R.[PRIORITY], R.THEME_ID, R.[SESSION]
-              FROM [OPTION] O
-                   INNER JOIN RESPONSE R ON R.OPTION_ID = O.ID
-                   INNER JOIN THEME T ON T.ID = R.THEME_ID";
-
-            DataSet result = new DataSet();
-
-            using (SqlCommand cmd = new SqlCommand(allOptionsQuery, sqlconn))
+            for (Int32 i = 0; i < getMatrix.GetLength(0); i++)
             {
-                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                for (Int32 j = 0; j < getMatrix.GetLength(1); j++)
                 {
-                    adapter.Fill(result);
+                    Console.Write("{0, 5} ", getMatrix[i, j]);
                 }
+                Console.WriteLine();
             }
-
-            return //IEnumerable<Int32[,]> responses = 
-                 result.Tables[0].AsEnumerable()
-                 .Select(x => new ResponseData(x))
-                 .GroupBy(x => x.ThemeID)
-                 .Select(x => GetPriorityMatrix(x))
-                 .ToList();
+            Console.WriteLine();
         }
 
-        public static Int32[,] GetPriorityMatrix(IEnumerable<ResponseData> source)
+        private static Int32[,] GetPriorityMatrix(IEnumerable<ResponseData> source)
         {
             Int32[,] output = null;
             foreach (var group in source.GroupBy(x => x.Session))
@@ -189,17 +176,55 @@ namespace ShultzeResponse
             return output;
         }
 
-        public static void PrintMatrix(Int32[,] getMatrix)
+
+
+        public static IEnumerable<Int32[,]> ProcessResponses(SqlConnection sqlconn)
         {
-            for (Int32 i = 0; i < getMatrix.GetLength(0); i++)
+            String allOptionsQuery = @"
+            SELECT R.OPTION_ID, R.[PRIORITY], R.THEME_ID, R.[SESSION]
+              FROM [OPTION] O
+                   INNER JOIN RESPONSE R ON R.OPTION_ID = O.ID
+                   INNER JOIN THEME T ON T.ID = R.THEME_ID";
+
+            DataSet result = new DataSet();
+
+            using (SqlCommand cmd = new SqlCommand(allOptionsQuery, sqlconn))
             {
-                for (Int32 j = 0; j < getMatrix.GetLength(1); j++)
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
                 {
-                    Console.Write("{0, 5} ", getMatrix[i, j]);
+                    adapter.Fill(result);
                 }
-                Console.WriteLine();
             }
-            Console.WriteLine();
+
+            return //IEnumerable<Int32[,]> responses = 
+                 result.Tables[0].AsEnumerable()
+                 .Select(x => new ResponseData(x))
+                 .GroupBy(x => x.ThemeID)
+                 .Select(x => GetPriorityMatrix(x))
+                 .ToList();
+        }
+
+        public static Int32[,] ProcessResponses(SqlConnection sqlconn, Int32 themeID)
+        {
+            String allOptionsQuery = @"
+            SELECT R.OPTION_ID, R.[PRIORITY], R.THEME_ID, R.[SESSION]
+              FROM [OPTION] O
+                   INNER JOIN RESPONSE R ON R.OPTION_ID = O.ID
+             WHERE R.THEME_ID = @THEME";
+
+            DataSet result = new DataSet();
+
+            using (SqlCommand cmd = new SqlCommand(allOptionsQuery, sqlconn))
+            {
+                cmd.Parameters.Add("@THEME", SqlDbType.Int).Value = themeID;
+
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                {
+                    adapter.Fill(result);
+                }
+            }
+
+            return GetPriorityMatrix(result.Tables[0].AsEnumerable().Select(x => new ResponseData(x)));
         }
 
         public static Int32[,] RunSchulzeMethod(Int32[,] inputMatrix)
@@ -260,6 +285,23 @@ namespace ShultzeResponse
                     yield return i;
                 }
             }
+        }
+
+        public static IEnumerable<Theme> GetThemes(SqlConnection sqlconn)
+        {
+            String allOptionsQuery = @"select t.ID, t.NAME from dbo.THEME t";
+
+            DataSet result = new DataSet();
+
+            using (SqlCommand cmd = new SqlCommand(allOptionsQuery, sqlconn))
+            {
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                {
+                    adapter.Fill(result);
+                }
+            }
+
+            return (result.Tables[0].AsEnumerable().Select(x => new Theme(x)));
         }
     }
 }

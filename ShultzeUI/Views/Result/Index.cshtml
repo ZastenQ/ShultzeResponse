@@ -1,0 +1,43 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+@model ShultzeUI.Models.Result.ResultModel
+
+<div style="display: inline-block;">
+
+    <div style="background-color: antiquewhite; box-shadow: #CCCCCC 3px 3px; text-align: center;">
+        @foreach (ShultzeResponse.Theme theme in Model.Themes)
+        { 
+            <a href="@Url.Action("Index", "Result", new { id = theme.ID })" style="padding:3px;font-size:15px;" >@theme.Name</a>
+        }
+    </div>
+    @if (Model.Responses != null)
+    {
+        <table style="padding-top: 10px; background-color: #EEEEEE; box-shadow: #AACCCC 3px 3px; width: 100%;">
+            <thead>
+                <tr>
+                    <td></td>
+                    @for (Int32 i = 0; i < Model.Responses.GetLength(0); i++)
+                    {
+                        <th>todo</th>
+                    }
+                </tr>
+            </thead>
+            @for (Int32 i = 0; i < Model.Responses.GetLength(0); i++)
+            {
+                <tr>
+                    <td>
+                        todo
+                    </td>
+                    @for (Int32 j = 0; j < Model.Responses.GetLength(1); j++)
+                    {
+                        <td style="text-align: right; padding: 5px;">
+                            @Model.Responses[i, j]
+                        </td>
+                    }
+                </tr>    
+            }
+        </table>
+    }
+
+</div>
