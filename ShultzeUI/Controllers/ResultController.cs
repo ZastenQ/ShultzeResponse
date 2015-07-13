@@ -24,11 +24,12 @@ namespace ShultzeUI.Controllers
                 if (id.HasValue)
                 {
                     model.Responses = ShultzeResponse.ShultzeMethods.ProcessResponses(connection, id.Value);
+                    model.Options = ShultzeResponse.ShultzeMethods.GetOptions(connection, id.Value);
                 }
                 model.Themes = ShultzeResponse.ShultzeMethods.GetThemes(connection);
-                return View("Index", model);
+
+                return Request.IsAjaxRequest() ? (ActionResult)PartialView("Partial/Table", model) : View("Index", model);
             }
         }
-
     }
 }

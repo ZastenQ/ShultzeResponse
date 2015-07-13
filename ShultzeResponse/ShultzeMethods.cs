@@ -303,5 +303,23 @@ namespace ShultzeResponse
 
             return (result.Tables[0].AsEnumerable().Select(x => new Theme(x)));
         }
+
+        public static IEnumerable<Option> GetOptions(SqlConnection sqlconn, Int32 themeID)
+        {
+            String allOptionsQuery = @"select t.ID, t.NAME from dbo.[Option] t where t.Theme_ID = @THEMEID";
+
+            DataSet result = new DataSet();
+
+            using (SqlCommand cmd = new SqlCommand(allOptionsQuery, sqlconn))
+            {
+                cmd.Parameters.Add(new SqlParameter("@THEMEID", SqlDbType.Int)).Value = themeID;
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                {
+                    adapter.Fill(result);
+                }
+            }
+
+            return (result.Tables[0].AsEnumerable().Select(x => new Option(x)));
+        }
     }
 }
